@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1882D7131D976C240039535A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 1882D7121D976C240039535A /* main.m */; };
 		1882D7161D976C240039535A /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 1882D7151D976C240039535A /* AppDelegate.m */; };
 		1882D7191D976C240039535A /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1882D7181D976C240039535A /* ViewController.m */; };
 		1882D71C1D976C240039535A /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1882D71A1D976C240039535A /* Main.storyboard */; };
@@ -15,6 +14,8 @@
 		1882D7211D976C240039535A /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1882D71F1D976C240039535A /* LaunchScreen.storyboard */; };
 		1882D72C1D976C240039535A /* ShireTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 1882D72B1D976C240039535A /* ShireTests.m */; };
 		1882D7371D976C240039535A /* ShireUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 1882D7361D976C240039535A /* ShireUITests.m */; };
+		1882D7461D97A7880039535A /* JImageDownloadOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 1882D7451D97A7880039535A /* JImageDownloadOperation.m */; };
+		1882D7491D97B5530039535A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 1882D7481D97B5530039535A /* main.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -36,7 +37,6 @@
 
 /* Begin PBXFileReference section */
 		1882D70E1D976C240039535A /* Shire.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Shire.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		1882D7121D976C240039535A /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		1882D7141D976C240039535A /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		1882D7151D976C240039535A /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
 		1882D7171D976C240039535A /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
@@ -51,6 +51,10 @@
 		1882D7321D976C240039535A /* ShireUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ShireUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1882D7361D976C240039535A /* ShireUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ShireUITests.m; sourceTree = "<group>"; };
 		1882D7381D976C240039535A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		1882D7441D97A7880039535A /* JImageDownloadOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = JImageDownloadOperation.h; path = ImageDownloadManager/JImageDownloadOperation.h; sourceTree = "<group>"; };
+		1882D7451D97A7880039535A /* JImageDownloadOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = JImageDownloadOperation.m; path = ImageDownloadManager/JImageDownloadOperation.m; sourceTree = "<group>"; };
+		1882D7471D97B4410039535A /* MacroDefineHeader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MacroDefineHeader.h; path = ImageDownloadManager/MacroDefineHeader.h; sourceTree = "<group>"; };
+		1882D7481D97B5530039535A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -110,6 +114,9 @@
 				1882D71F1D976C240039535A /* LaunchScreen.storyboard */,
 				1882D7221D976C240039535A /* Info.plist */,
 				1882D7111D976C240039535A /* Supporting Files */,
+				1882D7441D97A7880039535A /* JImageDownloadOperation.h */,
+				1882D7451D97A7880039535A /* JImageDownloadOperation.m */,
+				1882D7471D97B4410039535A /* MacroDefineHeader.h */,
 			);
 			path = Shire;
 			sourceTree = "<group>";
@@ -117,7 +124,7 @@
 		1882D7111D976C240039535A /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
-				1882D7121D976C240039535A /* main.m */,
+				1882D7481D97B5530039535A /* main.m */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -278,7 +285,8 @@
 			files = (
 				1882D7191D976C240039535A /* ViewController.m in Sources */,
 				1882D7161D976C240039535A /* AppDelegate.m in Sources */,
-				1882D7131D976C240039535A /* main.m in Sources */,
+				1882D7491D97B5530039535A /* main.m in Sources */,
+				1882D7461D97A7880039535A /* JImageDownloadOperation.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
