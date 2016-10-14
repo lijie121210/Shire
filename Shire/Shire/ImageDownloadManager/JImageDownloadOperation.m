@@ -15,7 +15,6 @@ NSString *const JDStopNotificationKey = @"JDStopNotificationKey";
 NSString *const JDFinishNotificationKey = @"JDFinishNotificationKey";
 NSString *const JDReceiveResponseNotificationKey = @"JDReceiveResponseNotificationKey";
 
-
 @interface JImageDownloadOperation () <NSURLSessionDelegate, NSURLSessionTaskDelegate, NSURLSessionDataDelegate>
 
 @property (nonatomic, copy) JDProgressBlock progressBlock;
