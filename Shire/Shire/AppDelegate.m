@@ -21,6 +21,8 @@
     
 //    [[JImageDownloadOperation new]
     
+//    NSCache
+    
     return YES;
 }
 

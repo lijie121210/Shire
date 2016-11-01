@@ -7,7 +7,6 @@
 //
 
 #import "JImageDownloadOperation.h"
-#import <UIKit/UIKit.h>
 #import <ImageIO/ImageIO.h>
 
 NSString *const JDStartNotificationKey = @"JDStartNotificationKey";
@@ -15,7 +14,7 @@ NSString *const JDStopNotificationKey = @"JDStopNotificationKey";
 NSString *const JDFinishNotificationKey = @"JDFinishNotificationKey";
 NSString *const JDReceiveResponseNotificationKey = @"JDReceiveResponseNotificationKey";
 
-@interface JImageDownloadOperation () <NSURLSessionDelegate, NSURLSessionTaskDelegate, NSURLSessionDataDelegate>
+@interface JImageDownloadOperation () 
 
 @property (nonatomic, copy) JDProgressBlock progressBlock;
 @property (nonatomic, copy) JDCompleteBlock completeBlock;
@@ -23,23 +22,17 @@ NSString *const JDReceiveResponseNotificationKey = @"JDReceiveResponseNotificati
 
 @property (nonatomic, weak) NSURLSession *unownSession;
 @property (nonatomic, strong) NSURLSession *ownSession;
-@property (nonatomic, strong) NSURLSessionTask *dataTask;
+//@property (nonatomic, strong) NSURLSessionTask *dataTask;
+
+@property (atomic, strong) NSThread *thread;
+@property (nonatomic, assign) UIBackgroundTaskIdentifier backgroundTaskID;
 
 @property (nonatomic, strong) NSMutableData *imageData;
 @property (nonatomic, assign) CGImageSourceRef increamentallyImageSource;
 
-@property (atomic, strong) NSThread *thread;
-
-@property (nonatomic, assign) UIBackgroundTaskIdentifier backgroundTaskID;
-
-
 @end
 
 @implementation JImageDownloadOperation
-{
-    UIImageOrientation orien;
-    BOOL isResponseCached;
-}
 
 @synthesize finished = _finished;
 @synthesize executing = _execting;
@@ -73,17 +66,7 @@ NSString *const JDReceiveResponseNotificationKey = @"JDReceiveResponseNotificati
     }
     return self;
 }
-// keyPath should be : @"finished" and @"execting"
-- (void)enableFinish_KVOSetter:(BOOL)value {
-    [self willChangeValueForKey:@"finished"];
-    _finished = value;
-    [self didChangeValueForKey:@"finished"];
-}
-- (void)enableExecuting_KVOSetter:(BOOL)value {
-    [self willChangeValueForKey:@"execting"];
-    _execting = value;
-    [self didChangeValueForKey:@"execting"];
-}
+
 //@override
 - (BOOL)isAsynchronous {
     return YES;
@@ -92,13 +75,22 @@ NSString *const JDReceiveResponseNotificationKey = @"JDReceiveResponseNotificati
 #pragma methon
 
 //@override
+/* 
+ 初始化_dataTask，并且启动之。启动失败则 完成回调函数 会被调用；
+ 多线程条件下，防止初始化多次，需要@synchronized同步；
+ 更新finished和executing状态时，暂时不考虑kvo；
+*/
 - (void)start {
     @synchronized (self) {
         if (_cancelled) {
-            [self enableFinish_KVOSetter:YES];
+            _finished = YES;
+            
             [self reset];
+            
             return;
         }
+        
+        // 暂时借鉴，学习后需要重写，避免使用多个session
         NSURLSession *session = _unownSession;
         if (!session) {
             NSURLSessionConfiguration *config = [NSURLSessionConfiguration defaultSessionConfiguration];
@@ -109,7 +101,7 @@ NSString *const JDReceiveResponseNotificationKey = @"JDReceiveResponseNotificati
         
         _thread = [NSThread currentThread];
         
-        [self enableExecuting_KVOSetter:YES];
+        _execting = YES;
     }
     
     [_dataTask resume];
@@ -124,20 +116,15 @@ NSString *const JDReceiveResponseNotificationKey = @"JDReceiveResponseNotificati
         });
     } else {
         if (_completeBlock) {
-            NSDictionary *reason = [NSDictionary dictionaryWithObjectsAndKeys:@"Can't start image data task!",NSLocalizedDescriptionKey, nil];
-            NSError *error = [NSError errorWithDomain:NSURLErrorDomain code:0 userInfo:reason];
-            _completeBlock(YES, nil, nil, error);
+            _completeBlock(YES, nil, nil, [NSError errorWithDomain:NSURLErrorDomain code:0 userInfo:@{NSLocalizedDescriptionKey:@"Can't start image data task!"}]);
         }
     }
 }
 
-- (void)done {
-    [self enableFinish_KVOSetter:YES];
-    [self enableExecuting_KVOSetter:NO];
-    [self reset];
-}
-
 //@override
+/*
+ 取消操作应该在初始化实例的线程中完成
+ */
 - (void)cancel {
     @synchronized (self) {
         if (_thread) {
@@ -166,15 +153,23 @@ NSString *const JDReceiveResponseNotificationKey = @"JDReceiveResponseNotificati
         });
         
         if (_execting) {
-            [self enableExecuting_KVOSetter:NO];
+            _execting = NO;
         }
+        
         if (!_finished) {
-            [self enableFinish_KVOSetter:YES];
+            _finished = YES;
         }
     }
     
     [self reset];
 }
+
+- (void)done {
+    _finished = YES;
+    _execting = NO;
+    [self reset];
+}
+
 - (void)reset {
     if (_increamentallyImageSource) {
         CFRelease(_increamentallyImageSource);
@@ -192,7 +187,7 @@ NSString *const JDReceiveResponseNotificationKey = @"JDReceiveResponseNotificati
     }
 }
 
-#pragma NSURLSessionTaskDelegate
+#pragma NSURLSessionDataDelegate
 
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveResponse:(NSURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition))completionHandler {
     
@@ -204,6 +199,7 @@ NSString *const JDReceiveResponseNotificationKey = @"JDReceiveResponseNotificati
         if (_progressBlock) {
             _progressBlock(0, _expectedSize);
         }
+        
         _imageData = [[NSMutableData alloc] initWithCapacity:_expectedSize];
         
         _response = httpResponse;
@@ -243,6 +239,7 @@ NSString *const JDReceiveResponseNotificationKey = @"JDReceiveResponseNotificati
     if (_completeBlock) {
         _completeBlock(NO, image, nil, nil); // 实时回传图片 didCompleteWithError被调用时才是结束
     }
+    
     CGImageRelease(imageRef);
     
     if (_progressBlock) {
@@ -267,44 +264,80 @@ NSString *const JDReceiveResponseNotificationKey = @"JDReceiveResponseNotificati
 
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
     @synchronized (self) {
-        _thread = nil;
-        _dataTask = nil;
+        self.thread = nil;
+        self.dataTask = nil;
         
         dispatch_async(dispatch_get_main_queue(), ^{
-            [[NSNotificationCenter defaultCenter] postNotificationName:JDFinishNotificationKey object:self];
+            [[NSNotificationCenter defaultCenter] postNotificationName:JDStopNotificationKey object:self];
+            
+            if (!error) {
+                [[NSNotificationCenter defaultCenter] postNotificationName:JDFinishNotificationKey object:self];
+            }
+            
         });
     }
+    
     if (error) {
+        
         if (_completeBlock) _completeBlock(YES, nil, nil, error);
+        
     } else {
         JDCompleteBlock block = _completeBlock;
+        
         if (block) {
-            NSCachedURLResponse *cachedResponse = [[NSURLCache sharedURLCache] cachedResponseForRequest:_request];
+            NSCachedURLResponse *cachedResponse = [[NSURLCache sharedURLCache] cachedResponseForRequest:self.request];
+            
             if (isResponseCached && cachedResponse) {
                 _completeBlock(YES, nil, nil, nil);
             } else if (_imageData) {
                 UIImage *image = [UIImage imageWithData:_imageData];
+                
                 if (CGSizeEqualToSize([image size], CGSizeZero)) {
-                    NSDictionary *reason = [NSDictionary dictionaryWithObjectsAndKeys:@"image data 0 pixel!",NSLocalizedDescriptionKey, nil];
-                    NSError *error = [NSError errorWithDomain:NSURLErrorDomain code:0 userInfo:reason];
-                    _completeBlock(YES, nil, nil, error);
+                    _completeBlock(YES, nil, nil, [NSError errorWithDomain:NSURLErrorDomain code:0 userInfo:@{NSLocalizedDescriptionKey:@"image data 0 pixel!"}]);
                 } else {
                     _completeBlock(YES, image, _imageData, nil);
                 }
             } else {
-                NSDictionary *reason = [NSDictionary dictionaryWithObjectsAndKeys:@"image data nil!",NSLocalizedDescriptionKey, nil];
-                NSError *error = [NSError errorWithDomain:NSURLErrorDomain code:0 userInfo:reason];
-                _completeBlock(YES, nil, nil, error);
+                _completeBlock(YES, nil, nil, [NSError errorWithDomain:NSURLErrorDomain code:0 userInfo:@{NSLocalizedDescriptionKey:@"image data nil!"}]);
             }
-        }
+        } // if (block)
     }
     _completeBlock = nil;
     
     [self done];
 }
 
+// 关于如何处理认证，还需要学习之后重写
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition, NSURLCredential * _Nullable))completionHandler {
     
+    NSURLSessionAuthChallengeDisposition disposition = NSURLSessionAuthChallengePerformDefaultHandling;
+    
+    __block NSURLCredential *credential = nil;
+    
+    if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
+        
+        BOOL testing = NO;
+        if (testing) {
+            credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
+            disposition = NSURLSessionAuthChallengeUseCredential;
+        } else {
+            disposition = NSURLSessionAuthChallengePerformDefaultHandling;
+        }
+        
+    } else {
+        
+        if (challenge.previousFailureCount == 0 && self.credential) {
+            credential = self.credential;
+            disposition = NSURLSessionAuthChallengeUseCredential;
+        } else {
+            disposition = NSURLSessionAuthChallengeCancelAuthenticationChallenge;
+        }
+        
+    }
+    
+    if (completionHandler) {
+        completionHandler(disposition, credential);
+    }
 }
 
 @end

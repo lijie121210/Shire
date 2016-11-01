@@ -9,10 +9,6 @@
 #ifndef MacroDefineHeader_h
 #define MacroDefineHeader_h
 
-@class UIImage;
-typedef void(^JDProgressBlock)(NSInteger expected, NSInteger received);
-typedef void(^JDCompleteBlock)(BOOL finished, UIImage *image, NSData *data, NSError *error);
-typedef void(^JDCancelBlock)();
 
 
 
