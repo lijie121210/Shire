@@ -70,7 +70,7 @@
     XCTAssertEqual(lfu_minstance.cacheCountLimit, 0);
     XCTAssertEqual(lfu_minstance.cacheTimeInterval, 60 * 60 * 24 * 3.5);
     
-    JImageLFUMemoryCache *lfu_minstance_c = [[JImageLFUMemoryCache alloc] initWithCapacity:_countLimit];
+    JImageLFUMemoryCache *lfu_minstance_c = [[JImageLFUMemoryCache alloc] initWithCapacity:_countLimit marking:nil];
     
     XCTAssertEqual(lfu_minstance_c.cacheCountLimit, _countLimit);
 }
@@ -252,27 +252,253 @@
     XCTAssertEqual(data, test_data_3);
 }
 
-- (void)testSet {
-    NSMutableSet *set = [NSMutableSet set];
+- (void)testLFU_6_monitor {
+    NSString *cache_mark = [NSString stringWithFormat:@"cache 1"];
     
-    dispatch_queue_t serial = dispatch_queue_create("com.test.serial", DISPATCH_QUEUE_SERIAL);
+    JImageLFUMemoryCache *lfu_mem_cache = [[JImageLFUMemoryCache alloc] initWithCapacity:10 marking:cache_mark];
     
-    dispatch_sync(serial, ^{
+    int t = 1;
+    while (t<10) {
         
-        NSString *key_1 = [NSString stringWithFormat:@"test data 1"];
-        NSString *key_2 = [NSString stringWithFormat:@"test data 2"];
-        NSString *key_3 = [NSString stringWithFormat:@"test data 3"];
+        if (t==5) {
+            lfu_mem_cache = nil;
+            
+            NSLog(@"should be nil");
+        }
         
-        [set addObject:key_1];
-        [set addObject:key_2];
-        [set addObject:key_3];
+        t+=1;
+        sleep(1);
+    }
+}
+
+- (void)testLFU_7_monitor_multiple {
+    JImageMemoryCache *c1 = [JImageMemoryCache memoryCacheMark:@"c1" CacheAlgorithm:MCacheAlgorithmDefault LimitOptions:nil];
+    JImageMemoryCache *c2 = [JImageMemoryCache memoryCacheMark:@"c2" CacheAlgorithm:MCacheAlgorithmLFU LimitOptions:nil];
+    JImageLFUMemoryCache *lfu1 = [[JImageLFUMemoryCache alloc] initWithCapacity:0 marking:@"lfu1x"];
+    
+    XCTAssertNotEqual(c1, c2);
+    XCTAssertNotEqual(c1, lfu1);
+    XCTAssertNotEqual(c2, lfu1);
+    
+    int t = 1;
+    while (t<=10) {
+        if (t==3) {
+            c1 = nil;
+            
+            XCTAssertNil(c1);
+            NSLog(@"c1 is nil");
+        }
+        if (t==6) {
+            c2 = nil;
+            
+            XCTAssertNil(c2);
+            NSLog(@"c2 is nil");
+        }
+        if (t==9) {
+            lfu1 = nil;
+            
+            XCTAssertNil(lfu1);
+            NSLog(@"lfu1 is nil");
+        }
+        t+=1;
+        sleep(1);
+    }
+    
+}
+
+- (void)testLFU_7_monitor_multiple_threads {
+    dispatch_queue_t queue = dispatch_queue_create("com.test.concurrent", DISPATCH_QUEUE_CONCURRENT);
+    
+    dispatch_async(queue, ^{
+        JImageMemoryCache *c1 = [JImageMemoryCache memoryCacheMark:nil CacheAlgorithm:MCacheAlgorithmDefault LimitOptions:nil];
         
-        
+        int t = 1;
+        while (t<=3) {
+            if (t==3) {
+                c1 = nil;
+                XCTAssertNil(c1);
+                NSLog(@"c1 is nil");
+            }
+            t+=1;
+            sleep(1);
+        }
+    });
+    dispatch_async(queue, ^{
+        JImageMemoryCache *c2 = [JImageMemoryCache memoryCacheMark:nil CacheAlgorithm:MCacheAlgorithmLFU LimitOptions:nil];
+        int t = 1;
+        while (t<=6) {
+            if (t==6) {
+                c2 = nil;
+                XCTAssertNil(c2);
+                NSLog(@"c2 is nil");
+            }
+            t+=1;
+            sleep(1);
+        }
+    });
+    dispatch_async(queue, ^{
+        JImageLFUMemoryCache *lfu1 = [[JImageLFUMemoryCache alloc] initWithCapacity:0 marking:nil];
+        int t = 1;
+        while (t<=8) {
+            if (t==8) {
+                lfu1 = nil;
+                XCTAssertNil(lfu1);
+                NSLog(@"lfu1 is nil");
+            }
+            t+=1;
+            sleep(1);
+        }
     });
     
-    
-    XCTAssertEqual(set.count, 3);
+    int t = 1;
+    while (t<=12) {
+        t+=1;
+        sleep(1);
+    }
 }
+
+- (void)testLFU_8_multithreading {
+    NSData *test_data_1 = [[NSString stringWithFormat:@"how are you?"] dataUsingEncoding:NSUTF8StringEncoding];
+    NSData *test_data_2 = [[NSString stringWithFormat:@"fine, thanks, and you?"] dataUsingEncoding:NSUTF8StringEncoding];
+    NSData *test_data_3 = [[NSString stringWithFormat:@"me to"] dataUsingEncoding:NSUTF8StringEncoding];
+    
+    NSString *key_1 = [NSString stringWithFormat:@"test data 1"];
+    NSString *key_2 = [NSString stringWithFormat:@"test data 2"];
+    NSString *key_3 = [NSString stringWithFormat:@"test data 3"];
+    
+    __block JImageLFUMemoryCache *lfu1 = [[JImageLFUMemoryCache alloc] initWithCapacity:5 marking:@"lfu1"];
+    
+    dispatch_queue_t queue = dispatch_queue_create("com.test.concurrent", DISPATCH_QUEUE_CONCURRENT);
+    dispatch_group_t group = dispatch_group_create();
+    
+    dispatch_group_async(group, queue, ^{
+        NSLog(@"1. %@", [NSThread currentThread]);
+        
+        [lfu1 insertValue:test_data_1 forKey:key_1];
+        [lfu1 insertValue:test_data_2 forKey:key_2];
+        [lfu1 insertValue:test_data_3 forKey:key_3];
+    });
+    dispatch_group_async(group, queue, ^{
+        NSLog(@"2. %@", [NSThread currentThread]);
+        
+        for (int i=0; i<100; ++i) {
+            NSData *data = [[NSString stringWithFormat:@"test data NO.%d", i] dataUsingEncoding:NSUTF8StringEncoding];
+            NSString *key = [NSString stringWithFormat:@"test data key %d", i];
+            [lfu1 insertValue:data forKey:key];
+        }
+    });
+    dispatch_group_async(group, queue, ^{
+        NSLog(@"3. %@", [NSThread currentThread]);
+        
+        int t = 0;
+        
+        while (t<10) {
+            
+            NSLog(@"real count of cache:%lu", [lfu1 realCacheCount]);
+            
+            t++;
+            sleep(1);
+        }
+    });
+    
+    dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+    
+    XCTAssertEqual([lfu1 realCacheCount], 103);
+    
+    [lfu1 clearMemory];
+    
+    XCTAssertEqual([lfu1 realCacheCount], 0);
+    
+    void (^destroyCache)(void) = ^(void){
+        lfu1 = nil;
+        NSLog(@"lfu1 is nil");
+    };
+    
+    destroyCache();
+    
+    int t = 0;
+    while (t<5) {
+        t+=1;
+        sleep(1);
+    }
+    
+    XCTAssertNil(lfu1);
+    XCTAssertEqual([lfu1 realCacheCount], 0);
+}
+
+
+
+- (void)testMCache_1_Init {
+    
+    NSString *mark_1 = [NSString stringWithFormat:@"test"];
+    NSDictionary *options_1 = [NSDictionary dictionaryWithObjectsAndKeys:
+                               [NSNumber numberWithUnsignedInteger:5], MCacheCountLimitKey,
+                               [NSNumber numberWithUnsignedInteger:1024*1024], MCacheSizeLimitKey,
+                               [NSNumber numberWithDouble:60*60], MCacheTimeIntervalLimitKey, nil];
+    MCacheAlgorithm algo_1 = MCacheAlgorithmDefault;
+    
+    JImageMemoryCache *mcache_1 = [JImageMemoryCache memoryCacheMark:mark_1 CacheAlgorithm:algo_1 LimitOptions:options_1];
+    
+    XCTAssertNotNil(mcache_1);
+    XCTAssertEqual([mcache_1 mark], mark_1);
+    XCTAssertTrue([mcache_1 isKindOfClass:[JImageLFUMemoryCache class]]);
+    XCTAssertFalse([mcache_1 isKindOfClass:[JImageLRUMemoryCache class]]);
+    
+    JImageMemoryCache *mcache_2 = [JImageMemoryCache memoryCacheMark:nil CacheAlgorithm:MCacheAlgorithmLFU LimitOptions:nil];
+    
+    XCTAssertNotNil(mcache_2);
+    XCTAssertTrue([mcache_2 isKindOfClass:[JImageLFUMemoryCache class]]);
+    XCTAssertFalse([mcache_2 isKindOfClass:[JImageLRUMemoryCache class]]);
+    
+    XCTAssertNotEqual(mcache_1, mcache_2);
+    
+    NSDictionary *options_3 = [NSDictionary dictionary];
+    JImageMemoryCache *mcache_3 = [JImageMemoryCache memoryCacheMark:nil CacheAlgorithm:MCacheAlgorithmLRU LimitOptions:options_3];
+    
+    XCTAssertNotNil(mcache_3);
+    XCTAssertFalse([mcache_3 isKindOfClass:[JImageLFUMemoryCache class]]);
+    XCTAssertTrue([mcache_3 isKindOfClass:[JImageLRUMemoryCache class]]);
+    
+    NSString *mark_4 = @"";
+    NSDictionary *options_4 = [NSDictionary dictionaryWithObjectsAndKeys:
+                               [NSNumber numberWithUnsignedInteger:5], MCacheCountLimitKey, nil];
+    MCacheAlgorithm algo_4 = MCacheAlgorithmLRU;
+    
+    JImageMemoryCache *mcache_4 = [JImageMemoryCache memoryCacheMark:mark_4 CacheAlgorithm:algo_4 LimitOptions:options_4];
+    
+    XCTAssertNotNil(mcache_4);
+    XCTAssertFalse([mcache_4 isKindOfClass:[JImageLFUMemoryCache class]]);
+    XCTAssertTrue([mcache_4 isKindOfClass:[JImageLRUMemoryCache class]]);
+    
+    XCTAssertNotNil([mcache_4 mark]);
+    XCTAssertEqual(mark_4, [mcache_4 mark]);
+    
+}
+
+- (void)testMCache_2_insert {
+    NSString *mark_1 = [NSString stringWithFormat:@"test"];
+    NSDictionary *options_1 = [NSDictionary dictionaryWithObjectsAndKeys:
+                               [NSNumber numberWithUnsignedInteger:5], MCacheCountLimitKey,
+                               [NSNumber numberWithUnsignedInteger:1024*1024], MCacheSizeLimitKey,
+                               [NSNumber numberWithDouble:60*60], MCacheTimeIntervalLimitKey, nil];
+    MCacheAlgorithm algo_1 = MCacheAlgorithmDefault;
+    
+    JImageMemoryCache *mcache_1 = [JImageMemoryCache memoryCacheMark:mark_1 CacheAlgorithm:algo_1 LimitOptions:options_1];
+    NSData *test_data_1 = [[NSString stringWithFormat:@"how are you?"] dataUsingEncoding:NSUTF8StringEncoding];
+    NSData *test_data_2 = [[NSString stringWithFormat:@"fine, thanks, and you?"] dataUsingEncoding:NSUTF8StringEncoding];
+    NSData *test_data_3 = [[NSString stringWithFormat:@"me to"] dataUsingEncoding:NSUTF8StringEncoding];
+    
+    NSString *key_1 = [NSString stringWithFormat:@"test data 1"];
+    NSString *key_2 = [NSString stringWithFormat:@"test data 2"];
+    NSString *key_3 = [NSString stringWithFormat:@"test data 3"];
+    
+    [mcache_1 insertValue:test_data_1 forKey:key_1];
+    [mcache_1 insertValue:test_data_2 forKey:key_2];
+    [mcache_1 insertValue:test_data_3 forKey:key_3];
+    
+    XCTAssertEqual([mcache_1 realCacheCount], 3);
+}
+
 
 
 @end

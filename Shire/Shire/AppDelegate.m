@@ -8,6 +8,7 @@
 
 #import "AppDelegate.h"
 #import "JImageDownloadOperation.h"
+#import "JImageLFUMemoryCache.h"
 
 @interface AppDelegate ()
 
@@ -22,7 +23,7 @@
 //    [[JImageDownloadOperation new]
     
 //    NSCache
-    
+
     return YES;
 }
 

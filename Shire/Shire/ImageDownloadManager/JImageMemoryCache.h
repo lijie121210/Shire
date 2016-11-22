@@ -8,23 +8,45 @@
 
 #import <Foundation/Foundation.h>
 
-@interface JImageMemoryCache: NSObject
+
+typedef NS_ENUM(NSUInteger, MCacheAlgorithm) {
+    MCacheAlgorithmDefault = 1<<0,
+    MCacheAlgorithmLFU = 1<<1,
+    MCacheAlgorithmLRU = 1<<2,
+};
+
+extern NSString *const MCacheSizeLimitKey;
+extern NSString *const MCacheCountLimitKey;
+extern NSString *const MCacheTimeIntervalLimitKey;
+
+
+@protocol JImageMemoryCacheAbility <NSObject>
+
+@optional
+- (void)insertValue:(NSData *)data forKey:(NSString *)key;
+- (NSData *)fetchValueForKey:(NSString *)key;
+- (BOOL)existValueForKey:(NSString *)key;
+- (void)clearMemory;
+- (NSUInteger)realCacheCount;
+
+@end
+
+
+
+@interface JImageMemoryCache: NSObject <JImageMemoryCacheAbility> {
+    @public
+    dispatch_source_t _monitorTimer;
+    NSUInteger _cacheSize;
+}
 
 @property (copy) NSString *mark;
+@property (readonly) NSUInteger cacheSizeLimit;
+@property (readonly) NSUInteger cacheCountLimit;
+@property (readonly) NSTimeInterval cacheTimeInterval;
 
-@property NSUInteger cacheSizeLimit;
-@property NSUInteger cacheCountLimit;
-@property NSTimeInterval cacheTimeInterval;
++ (JImageMemoryCache *)memoryCacheMark:(NSString *)mark CacheAlgorithm:(MCacheAlgorithm)algorithm LimitOptions:(NSDictionary *)options;
 
-- (void)insertValue:(NSData *)data forKey:(NSString *)key;
-
-- (NSData *)fetchValueForKey:(NSString *)key;
-
-- (BOOL)existValueForKey:(NSString *)key;
-
-- (void)clearMemory;
-
-- (NSUInteger)realCacheCount;
+- (void)startMonitorLoopWithEventHandler:(dispatch_block_t)eventHandler AndCancelHandler:(dispatch_block_t)cancelHandler;
 
 @end
 

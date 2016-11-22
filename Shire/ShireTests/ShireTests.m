@@ -8,7 +8,7 @@
 
 #import <XCTest/XCTest.h>
 
-
+#import "TestObjc.h"
 
 @interface ShireTests : XCTestCase
 
@@ -122,9 +122,52 @@
     XCTAssertEqual(update_cache, new_cache);
 }
 
+- (void)testNullPtr {
+    NSString *str = [NSString stringWithFormat:@"abc"];
+    
+    XCTAssertEqual(str.length, 3);
+    
+    str = nil;
+    
+    XCTAssertNil(str);
+    
+    XCTAssertEqual(str.length, 0);
+    
+    
+}
 
+- (void)testBlock  {
+    __block int i = 0;
+    
+    void (^block)(void) = ^{
+        
+        NSLog(@"i = %d", i);
+    };
+    
+    block();
+    
+    i = 5;
+    
+    block();
+}
 
-
-
+- (void)testAotmic {
+    
+    int c = 10;
+    while (c-- > 0) {
+        
+        TestObjc *objc = [[TestObjc alloc] init];
+        
+        dispatch_queue_t cQueue = dispatch_queue_create("test.aotmic", DISPATCH_QUEUE_CONCURRENT);
+        
+        dispatch_apply(10002, cQueue, ^(size_t index) {
+            [objc updateCount];
+        });
+        
+        XCTAssertEqual(objc.count, 10002);
+        
+        sleep(1);        
+    }
+}
 
 @end

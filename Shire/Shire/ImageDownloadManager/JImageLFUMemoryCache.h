@@ -11,8 +11,9 @@
 @interface JImageLFUMemoryCache : JImageMemoryCache
 
 - (instancetype)initWithCapacity:(NSUInteger)countLimit marking:(NSString *)mark;
-
-- (instancetype)initWithCapacity:(NSUInteger)countLimit;
+- (instancetype)initWithCostLimit:(NSUInteger)costLimit marking:(NSString *)mark;
+- (instancetype)initWithAgeLimit:(NSTimeInterval)ageLimit marking:(NSString *)mark;
+- (instancetype)initWithCapacity:(NSUInteger)countLimit CostLimit:(NSUInteger)costLimit AgeLimit:(NSTimeInterval)ageLimit Marking:(NSString *)mark;
 
 - (NSArray *)getLfuItemKeys;
 

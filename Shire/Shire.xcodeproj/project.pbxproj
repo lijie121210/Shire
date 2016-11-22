@@ -21,6 +21,10 @@
 		18A132691DBF743600CF473B /* JImageMemoryCache.m in Sources */ = {isa = PBXBuildFile; fileRef = 18A132681DBF743600CF473B /* JImageMemoryCache.m */; };
 		18A1326C1DBF789E00CF473B /* JImageLFUMemoryCache.m in Sources */ = {isa = PBXBuildFile; fileRef = 18A1326B1DBF789E00CF473B /* JImageLFUMemoryCache.m */; };
 		18BA1C891DBB45180083D965 /* JImageCache.m in Sources */ = {isa = PBXBuildFile; fileRef = 18BA1C881DBB45180083D965 /* JImageCache.m */; };
+		18FDBA7C1DE2CD920061E95E /* JDownloadOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 18FDBA7B1DE2CD920061E95E /* JDownloadOperation.m */; };
+		18FDBA7F1DE2F00D0061E95E /* TestObjc.m in Sources */ = {isa = PBXBuildFile; fileRef = 18FDBA7E1DE2F00D0061E95E /* TestObjc.m */; };
+		18FDBA951DE471C30061E95E /* JDownloadOperationTester.m in Sources */ = {isa = PBXBuildFile; fileRef = 18FDBA941DE471C30061E95E /* JDownloadOperationTester.m */; };
+		18FDBA971DE4760C0061E95E /* JDownloadOperationTestCase.m in Sources */ = {isa = PBXBuildFile; fileRef = 18FDBA961DE4760C0061E95E /* JDownloadOperationTestCase.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -60,7 +64,7 @@
 		1882D7381D976C240039535A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		1882D7441D97A7880039535A /* JImageDownloadOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = JImageDownloadOperation.h; path = ImageDownloadManager/JImageDownloadOperation.h; sourceTree = "<group>"; };
 		1882D7451D97A7880039535A /* JImageDownloadOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = JImageDownloadOperation.m; path = ImageDownloadManager/JImageDownloadOperation.m; sourceTree = "<group>"; };
-		1882D7471D97B4410039535A /* MacroDefineHeader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MacroDefineHeader.h; path = ImageDownloadManager/MacroDefineHeader.h; sourceTree = "<group>"; };
+		1882D7471D97B4410039535A /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = config.h; path = ImageDownloadManager/config.h; sourceTree = "<group>"; };
 		1882D7481D97B5530039535A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		1892AED21DC0EAB400CA93CB /* MemoryCacheTestCase.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MemoryCacheTestCase.m; sourceTree = "<group>"; };
 		18A132671DBF743600CF473B /* JImageMemoryCache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = JImageMemoryCache.h; path = ImageDownloadManager/JImageMemoryCache.h; sourceTree = "<group>"; };
@@ -69,6 +73,13 @@
 		18A1326B1DBF789E00CF473B /* JImageLFUMemoryCache.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = JImageLFUMemoryCache.m; path = ImageDownloadManager/JImageLFUMemoryCache.m; sourceTree = "<group>"; };
 		18BA1C871DBB45180083D965 /* JImageCache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = JImageCache.h; path = ImageDownloadManager/JImageCache.h; sourceTree = "<group>"; };
 		18BA1C881DBB45180083D965 /* JImageCache.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = JImageCache.m; path = ImageDownloadManager/JImageCache.m; sourceTree = "<group>"; };
+		18FDBA7A1DE2CD920061E95E /* JDownloadOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = JDownloadOperation.h; path = ImageDownloadManager/JDownloadOperation.h; sourceTree = "<group>"; };
+		18FDBA7B1DE2CD920061E95E /* JDownloadOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = JDownloadOperation.m; path = ImageDownloadManager/JDownloadOperation.m; sourceTree = "<group>"; };
+		18FDBA7D1DE2F00D0061E95E /* TestObjc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TestObjc.h; path = ImageDownloadManager/TestObjc.h; sourceTree = "<group>"; };
+		18FDBA7E1DE2F00D0061E95E /* TestObjc.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TestObjc.m; path = ImageDownloadManager/TestObjc.m; sourceTree = "<group>"; };
+		18FDBA931DE471C30061E95E /* JDownloadOperationTester.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JDownloadOperationTester.h; sourceTree = "<group>"; };
+		18FDBA941DE471C30061E95E /* JDownloadOperationTester.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JDownloadOperationTester.m; sourceTree = "<group>"; };
+		18FDBA961DE4760C0061E95E /* JDownloadOperationTestCase.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JDownloadOperationTestCase.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -121,19 +132,20 @@
 			children = (
 				1882D7141D976C240039535A /* AppDelegate.h */,
 				1882D7151D976C240039535A /* AppDelegate.m */,
-				1882D7111D976C240039535A /* Supporting Files */,
-				1886B0D61DC6E8F00016B54C /* UI_Layer */,
+				1882D7171D976C240039535A /* ViewController.h */,
+				1882D7181D976C240039535A /* ViewController.m */,
+				1882D71A1D976C240039535A /* Main.storyboard */,
+				1882D71D1D976C240039535A /* Assets.xcassets */,
+				1882D71F1D976C240039535A /* LaunchScreen.storyboard */,
 				1882D7441D97A7880039535A /* JImageDownloadOperation.h */,
 				1882D7451D97A7880039535A /* JImageDownloadOperation.m */,
-				18BA1C871DBB45180083D965 /* JImageCache.h */,
-				18BA1C881DBB45180083D965 /* JImageCache.m */,
-				18A132671DBF743600CF473B /* JImageMemoryCache.h */,
-				18A132681DBF743600CF473B /* JImageMemoryCache.m */,
-				18A1326A1DBF789E00CF473B /* JImageLFUMemoryCache.h */,
-				18A1326B1DBF789E00CF473B /* JImageLFUMemoryCache.m */,
-				18139A251DC33D9B00EC6A4B /* JImageLRUMemoryCache.h */,
-				18139A261DC33D9B00EC6A4B /* JImageLRUMemoryCache.m */,
-				1882D7471D97B4410039535A /* MacroDefineHeader.h */,
+				18FDBA7A1DE2CD920061E95E /* JDownloadOperation.h */,
+				18FDBA7B1DE2CD920061E95E /* JDownloadOperation.m */,
+				18FDBA7D1DE2F00D0061E95E /* TestObjc.h */,
+				18FDBA7E1DE2F00D0061E95E /* TestObjc.m */,
+				18FDBA761DE2CD040061E95E /* cache */,
+				1882D7471D97B4410039535A /* config.h */,
+				1882D7111D976C240039535A /* Supporting Files */,
 			);
 			path = Shire;
 			sourceTree = "<group>";
@@ -150,6 +162,9 @@
 		1882D72A1D976C240039535A /* ShireTests */ = {
 			isa = PBXGroup;
 			children = (
+				18FDBA931DE471C30061E95E /* JDownloadOperationTester.h */,
+				18FDBA941DE471C30061E95E /* JDownloadOperationTester.m */,
+				18FDBA961DE4760C0061E95E /* JDownloadOperationTestCase.m */,
 				1882D72B1D976C240039535A /* ShireTests.m */,
 				1892AED21DC0EAB400CA93CB /* MemoryCacheTestCase.m */,
 				1882D72D1D976C240039535A /* Info.plist */,
@@ -166,16 +181,19 @@
 			path = ShireUITests;
 			sourceTree = "<group>";
 		};
-		1886B0D61DC6E8F00016B54C /* UI_Layer */ = {
+		18FDBA761DE2CD040061E95E /* cache */ = {
 			isa = PBXGroup;
 			children = (
-				1882D7171D976C240039535A /* ViewController.h */,
-				1882D7181D976C240039535A /* ViewController.m */,
-				1882D71A1D976C240039535A /* Main.storyboard */,
-				1882D71D1D976C240039535A /* Assets.xcassets */,
-				1882D71F1D976C240039535A /* LaunchScreen.storyboard */,
+				18BA1C871DBB45180083D965 /* JImageCache.h */,
+				18BA1C881DBB45180083D965 /* JImageCache.m */,
+				18A132671DBF743600CF473B /* JImageMemoryCache.h */,
+				18A132681DBF743600CF473B /* JImageMemoryCache.m */,
+				18A1326A1DBF789E00CF473B /* JImageLFUMemoryCache.h */,
+				18A1326B1DBF789E00CF473B /* JImageLFUMemoryCache.m */,
+				18139A251DC33D9B00EC6A4B /* JImageLRUMemoryCache.h */,
+				18139A261DC33D9B00EC6A4B /* JImageLRUMemoryCache.m */,
 			);
-			name = UI_Layer;
+			name = cache;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -240,7 +258,7 @@
 		1882D7061D976C240039535A /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0800;
+				LastUpgradeCheck = 0810;
 				ORGANIZATIONNAME = huatengIOT;
 				TargetAttributes = {
 					1882D70D1D976C240039535A = {
@@ -315,11 +333,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				18A1326C1DBF789E00CF473B /* JImageLFUMemoryCache.m in Sources */,
+				18FDBA7C1DE2CD920061E95E /* JDownloadOperation.m in Sources */,
 				1882D7191D976C240039535A /* ViewController.m in Sources */,
 				1882D7161D976C240039535A /* AppDelegate.m in Sources */,
 				18BA1C891DBB45180083D965 /* JImageCache.m in Sources */,
 				1882D7491D97B5530039535A /* main.m in Sources */,
 				18A132691DBF743600CF473B /* JImageMemoryCache.m in Sources */,
+				18FDBA7F1DE2F00D0061E95E /* TestObjc.m in Sources */,
 				18139A271DC33D9B00EC6A4B /* JImageLRUMemoryCache.m in Sources */,
 				1882D7461D97A7880039535A /* JImageDownloadOperation.m in Sources */,
 			);
@@ -330,6 +350,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				1882D72C1D976C240039535A /* ShireTests.m in Sources */,
+				18FDBA951DE471C30061E95E /* JDownloadOperationTester.m in Sources */,
+				18FDBA971DE4760C0061E95E /* JDownloadOperationTestCase.m in Sources */,
 				1892AED31DC0EAB400CA93CB /* MemoryCacheTestCase.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -395,6 +417,7 @@
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_SUSPICIOUS_MOVES = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
@@ -443,6 +466,7 @@
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_SUSPICIOUS_MOVES = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;

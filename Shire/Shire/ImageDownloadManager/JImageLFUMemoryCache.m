@@ -93,12 +93,24 @@
 @end
 
 
+@interface JImageLFUMemoryCache ()
+
+@property NSUInteger cacheSizeLimit;
+@property NSUInteger cacheCountLimit;
+@property NSTimeInterval cacheTimeInterval;
+
+@end
 
 @implementation JImageLFUMemoryCache {
     NSMutableDictionary *_dictionary;
     FreqNode *_head;
+    
     dispatch_queue_t _mqueue;
 }
+
+@synthesize cacheSizeLimit = _cacheSizeLimit;
+@synthesize cacheCountLimit = _cacheCountLimit;
+@synthesize cacheTimeInterval = _cacheTimeInterval;
 
 - (void)dealloc {
     _dictionary = nil;
@@ -107,14 +119,22 @@
 }
 
 - (instancetype)init {
-    return [self initWithCapacity:0 marking:nil];
-}
-
-- (instancetype)initWithCapacity:(NSUInteger)countLimit {
-    return [self initWithCapacity:countLimit marking:nil];
+    return [self initWithCapacity:0 CostLimit:0 AgeLimit:0 Marking:nil];
 }
 
 - (instancetype)initWithCapacity:(NSUInteger)countLimit marking:(NSString *)mark {
+    return [self initWithCapacity:countLimit CostLimit:0 AgeLimit:0 Marking:mark];
+}
+
+- (instancetype)initWithCostLimit:(NSUInteger)costLimit marking:(NSString *)mark {
+    return [self initWithCapacity:0 CostLimit:costLimit AgeLimit:0 Marking:mark];
+}
+
+- (instancetype)initWithAgeLimit:(NSTimeInterval)ageLimit marking:(NSString *)mark {
+    return [self initWithCapacity:0 CostLimit:0 AgeLimit:ageLimit Marking:mark];
+}
+
+- (instancetype)initWithCapacity:(NSUInteger)countLimit CostLimit:(NSUInteger)costLimit AgeLimit:(NSTimeInterval)ageLimit Marking:(NSString *)mark {
     self = [super init];
     if (self) {
         _head = [[FreqNode alloc] init];
@@ -126,29 +146,35 @@
         } else {
             _dictionary = [NSMutableDictionary dictionary];
         }
-        
+        if (costLimit > 0) {
+            self.cacheSizeLimit = costLimit;
+        }
+        if (ageLimit > 0) {
+            self.cacheTimeInterval = ageLimit;
+        } else {
+            self.cacheTimeInterval = 60 * 60 * 24;
+        }
         if (mark) {
             self.mark = mark;
         }
         
-        self.cacheTimeInterval = 60 * 60 * 24 * 3.5;
-        
         _mqueue = dispatch_queue_create("com.viwii.jimagelfumemorycache", DISPATCH_QUEUE_SERIAL);
         
-        
+        [self startMonitorLoop];
     }
     return self;
 }
 
-// inherit methods
+#pragma mark - protocol
 
 - (void)insertValue:(NSData *)data forKey:(NSString *)key {
     if (!key || ![key isKindOfClass:[NSString class]]) {
         NSLog(@"key is illicit");
         return;
     }
-    
+    __weak typeof(self) weakself = self;
     dispatch_sync(_mqueue, ^{
+        __strong typeof(weakself) sself = weakself;
         
         LfuItem *existedItem = [_dictionary objectForKey:key];
         FreqNode *parentNode = nil;
@@ -162,7 +188,8 @@
             parentNode = _head;
         }
         
-        FreqNode *node = [self increasingNodeNextToParentNode:parentNode];
+        // create new parent node, which indicate the right frequency
+        FreqNode *node = [sself increasingNodeNextToParentNode:parentNode];
         
         // save key
         [node addItem:key];
@@ -175,7 +202,7 @@
             [parentNode removeItem:key];
             
             if ([parentNode itemCount] == 0) {
-                [self deleteFreqNode:parentNode];
+                [sself deleteFreqNode:parentNode];
             }
         }
     });
@@ -187,16 +214,23 @@
         return nil;
     }
     __block id value = nil;
-    
+    __weak typeof(self) weakself = self;
     dispatch_sync(_mqueue, ^{
+        __strong typeof(weakself) sself = weakself;
+        
         LfuItem *item = [_dictionary objectForKey:key];
         if (!item) {
             NSLog(@"item not find for key:%@", key);
             return;
         }
+        
+        // remove this item from dictionary
         [_dictionary removeObjectForKey:key];
         
+        // get item's value
         value = item.data;
+        
+        // get item's parent node on the link list
         FreqNode *parentNode = (FreqNode *)item.parentNode;
         
         if (!parentNode) {
@@ -204,15 +238,19 @@
             return;
         }
         
-        FreqNode *node = [self increasingNodeNextToParentNode:parentNode];
+        // create new parent node, which indicate the right frequency
+        FreqNode *node = [sself increasingNodeNextToParentNode:parentNode];
         
+        // save key to node's set
         [node addItem:key];
+        
+        // save new item for key
         [_dictionary setObject:[[LfuItem alloc] initWithData:value parentNode:parentNode] forKey:key];
         
         //at last, update parent node status if need
         [parentNode removeItem:key];
         if ([parentNode itemCount] == 0) {
-            [self deleteFreqNode:parentNode];
+            [sself deleteFreqNode:parentNode];
         }
     });
     
@@ -236,28 +274,36 @@
 }
 
 -(void)clearMemory {
-    [_dictionary removeAllObjects];
+    __weak typeof(self) weakself = self;
     
-    _dictionary = nil;
-    
-    FreqNode *p = _head;
-    while (p) {
-        [p.items removeAllObjects];
+    dispatch_sync(_mqueue, ^{
+        __strong typeof(weakself) sself = weakself;
         
-        p = (FreqNode *)p.nextNode;
-    }
-    
-    _head = nil;
-    
-    // reset
-    
-    if (self.cacheCountLimit > 0) {
-        _dictionary = [NSMutableDictionary dictionaryWithCapacity:self.cacheCountLimit];
-    } else {
-        _dictionary = [NSMutableDictionary dictionary];
-    }
-    
-    _head = [[FreqNode alloc] init];
+        // remove
+        
+        [_dictionary removeAllObjects];
+        
+        _dictionary = nil;
+        
+        FreqNode *p = _head;
+        while (p) {
+            [p.items removeAllObjects];
+            
+            p = (FreqNode *)p.nextNode;
+        }
+        
+        _head = nil;
+        
+        // reset
+        
+        if (sself.cacheCountLimit > 0) {
+            _dictionary = [NSMutableDictionary dictionaryWithCapacity:self.cacheCountLimit];
+        } else {
+            _dictionary = [NSMutableDictionary dictionary];
+        }
+        
+        _head = [[FreqNode alloc] init];
+    });
 }
 
 - (NSUInteger)realCacheCount {
@@ -268,7 +314,16 @@
     return count;
 }
 
-// help method
+- (NSUInteger)realCacheSize {
+    __block NSUInteger count = 0;
+    dispatch_sync(_mqueue, ^{
+        count = _cacheSize;
+    });
+    return count;
+}
+
+
+#pragma mark - help method
 
 - (void)deleteFreqNode:(FreqNode *)fnode {
     
@@ -347,6 +402,67 @@
     });
     
     return keys;
+}
+
+
+
+#pragma mark - Monitor todo
+
+- (void)monitorCurrentCount:(NSUInteger)count Limit:(NSUInteger)limit {
+    
+    NSLog(@"<objc:%@>", self);
+    /*if (count >= limit) {
+        NSUInteger exceeded = count - limit;
+    }*/
+}
+- (void)monitorCurrentSize:(NSUInteger)size Limit:(NSUInteger)limit {
+    /*if (size >= limit) {
+        NSUInteger exceeded = size - limit;
+    }*/
+}
+- (void)cacheElementAgeMonitor {
+    
+}
+
+/*!
+ @discussion
+    this method start a timer source, which check the cache limit every five seconds
+ */
+- (void)startMonitorLoop {
+    
+    // timer call back fire block
+    __weak typeof(self) wself = self;
+    
+    dispatch_block_t eventHandler = ^{@autoreleasepool{
+        
+        __strong typeof(wself) sself = wself;
+        
+        NSUInteger currentCount = [sself realCacheCount];
+        //NSUInteger currentSize = [sself realCacheSize];
+        
+        [sself monitorCurrentCount:currentCount Limit:sself.cacheCountLimit];
+        //[sself monitorCurrentSize:currentSize Limit:sself.cacheSizeLimit];
+        
+        NSLog(@"<objc:%@, mark:%@, sel:%@> in timer event handler", sself, sself.mark, NSStringFromSelector(_cmd));
+    }};
+    
+    // timer cancel block
+    dispatch_block_t cancelHandler = ^{@autoreleasepool{
+        __strong typeof(wself) sself = wself;
+        NSUInteger currentCount = [sself realCacheCount];        
+        [sself monitorCurrentCount:currentCount Limit:sself.cacheCountLimit];
+        
+        NSLog(@"<sel:%@> in timer cancel handler", NSStringFromSelector(_cmd));
+    }};
+    
+    [self startMonitorLoopWithEventHandler:eventHandler AndCancelHandler:cancelHandler];
+}
+
+/*!
+ @override
+ */
+- (void)startMonitorLoopWithEventHandler:(dispatch_block_t)eventHandler AndCancelHandler:(dispatch_block_t)cancelHandler {
+    [super startMonitorLoopWithEventHandler:eventHandler AndCancelHandler:cancelHandler];
 }
 
 @end

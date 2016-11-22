@@ -8,7 +8,6 @@
 
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
-#import "MacroDefineHeader.h"
 
 
 extern NSString *const JDStartNotificationKey;
@@ -28,6 +27,7 @@ typedef void(^JDCancelBlock)();
     
     BOOL isResponseCached;
 }
+
 // override can't work with kvo!
 @property (nonatomic, assign, readonly, getter=isFinished) BOOL finished;
 @property (nonatomic, assign, readonly, getter=isExecuting) BOOL executing;
