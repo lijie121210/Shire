@@ -231,18 +231,39 @@
     }
 }
 
+- (void)setName:(NSString *)name {
+    NSLog(@"name === downloadPath, do not set name!");
+}
+- (NSString *)name {
+    if (dispatch_get_specific(kIsDispatchedOnQueue)) {
+        if (_downloadPath) {
+            return _downloadPath;
+        } else {
+            return nil;
+        }
+    } else {
+        __block NSString *n = nil;
+        dispatch_sync(_serialQueue, ^{
+            n = _downloadPath;
+        });
+        return n;
+    }
+}
+
+
+
 /*
  * override methods
  */
 
 - (void)start { dispatch_sync(_serialQueue, ^{ @autoreleasepool{
     
-    if (self.isCancelled || !_downloadPath) {
+    if (self.isCancelled || !_downloadPath || !_operationDelegate) {
         self.finished = YES;
         self.executing = NO;
         
-        if (_operationDelegate && [_operationDelegate respondsToSelector:@selector(downloadOperationDidCancel:)]) {
-            [_operationDelegate downloadOperationDidCancel:self];
+        if (_operationDelegate && [_operationDelegate respondsToSelector:@selector(downloadOperation:didCancelWithReason:)]) {
+            [_operationDelegate downloadOperation:self didCancelWithReason:@"Be cancelled"];
         }
         
         [self clear];
@@ -299,8 +320,8 @@
         
         [super cancel];
         
-        if (_operationDelegate && [_operationDelegate respondsToSelector:@selector(downloadOperationDidCancel:)]) {
-            [_operationDelegate downloadOperationDidCancel:self];
+        if (_operationDelegate && [_operationDelegate respondsToSelector:@selector(downloadOperation:didCancelWithReason:)]) {
+            [_operationDelegate downloadOperation:self didCancelWithReason:@"304 Not modify"];
         }
         
         if (_dataTask) {
@@ -333,8 +354,8 @@
             [_dataTask cancel];
         }
         
-        if (_operationDelegate && [_operationDelegate respondsToSelector:@selector(downloadOperationDidCancel:)]) {
-            [_operationDelegate downloadOperationDidCancel:self];
+        if (_operationDelegate && [_operationDelegate respondsToSelector:@selector(downloadOperation:didCancelWithReason:)]) {
+            [_operationDelegate downloadOperation:self didCancelWithReason:@"In general, bad request"];
         }
     };
     if (dispatch_get_specific(kIsDispatchedOnQueue)) {
@@ -380,6 +401,7 @@
         
         NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
         NSInteger responseCode = [httpResponse statusCode];
+        
         /*
          * responseCode == 304  Remote image is not changed
          * responseCode < 400   Received response successfully
@@ -392,8 +414,8 @@
             NSUInteger length = [httpResponse expectedContentLength] > 0 ? (NSUInteger)[httpResponse expectedContentLength] : 0;
             _expectedSize = length;
             _receivedData = [[NSMutableData alloc] initWithCapacity:length];
-            if (_operationDelegate && [_operationDelegate respondsToSelector:@selector(downloadOperation:receivingData:expectData:)]) {
-                [_operationDelegate downloadOperation:self receivingData:0 expectData:length];
+            if (_operationDelegate && [_operationDelegate respondsToSelector:@selector(downloadOperation:receivedSize:expectSize:)]) {
+                [_operationDelegate downloadOperation:self receivedSize:0 expectSize:length];
             }
         } else {
             
@@ -420,10 +442,21 @@
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)data {
     
     dispatch_block_t block = ^{
+        
+        if (self.isCancelled) {
+            [self callOff];
+            [self done];
+            return;
+        }
+        
         [_receivedData appendData:data];
         
-        if (_operationDelegate && [_operationDelegate respondsToSelector:@selector(downloadOperation:receivingData:expectData:)]) {
-            [_operationDelegate downloadOperation:self receivingData:data.length expectData:_expectedSize];
+        if (_operationDelegate && [_operationDelegate respondsToSelector:@selector(downloadOperation:receivedData:)]) {
+            [_operationDelegate downloadOperation:self receivedData:data];
+        }
+        
+        if (_operationDelegate && [_operationDelegate respondsToSelector:@selector(downloadOperation:receivedSize:expectSize:)]) {
+            [_operationDelegate downloadOperation:self receivedSize:data.length expectSize:_expectedSize];
         }
         
         if (_operationDelegate && [_operationDelegate respondsToSelector:@selector(downloadOperation:updateProgress:)]) {
@@ -468,8 +501,8 @@
         _dataTask = nil;
         
         if (error) {
-            if (_operationDelegate && [_operationDelegate respondsToSelector:@selector(downloadOperationDidFail:)]) {
-                [_operationDelegate downloadOperationDidFail:self];
+            if (_operationDelegate && [_operationDelegate respondsToSelector:@selector(downloadOperation:didFailWithError:)]) {
+                [_operationDelegate downloadOperation:self didFailWithError:error];
             }
         } else {
             if (_operationDelegate && [_operationDelegate respondsToSelector:@selector(downloadOperation:didFinishWithData:)]) {
